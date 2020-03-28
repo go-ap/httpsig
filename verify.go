@@ -23,11 +23,14 @@ import (
 	"strings"
 )
 
+// Verifier is used by by the HTTP server to verify the incoming HTTP requests
 type Verifier struct {
 	keyGetter       KeyGetter
 	requiredHeaders []string
 }
 
+// NewVerifier creates a new Verifier using kg to get the key
+// mapped to the ID received in the requests
 func NewVerifier(kg KeyGetter) *Verifier {
 	v := &Verifier{
 		keyGetter: kg,
@@ -36,10 +39,13 @@ func NewVerifier(kg KeyGetter) *Verifier {
 	return v
 }
 
+// RequiredHeaders returns the required header the client have to include in
+// the signature
 func (v *Verifier) RequiredHeaders() []string {
 	return append([]string{}, v.requiredHeaders...)
 }
 
+// SetRequiredHeaders set the list of headers to be included by the client to generate the signature
 func (v *Verifier) SetRequiredHeaders(headers []string) {
 	if len(headers) == 0 {
 		headers = []string{"date"}
@@ -51,13 +57,15 @@ func (v *Verifier) SetRequiredHeaders(headers []string) {
 	v.requiredHeaders = requiredHeaders
 }
 
+// Verify parses req  and verify the signature using the key returned by
+// the keyGetter. It returns a nil error is the signature verifies, an error otherwise
 func (v *Verifier) Verify(req *http.Request) error {
 	// retrieve and validate params from the request
 	params := getParamsFromAuthHeader(req)
 	if params == nil {
 		return fmt.Errorf("no params present")
 	}
-	if params.KeyId == "" {
+	if params.KeyID == "" {
 		return fmt.Errorf("keyId is required")
 	}
 	if params.Algorithm == "" {
@@ -73,7 +81,7 @@ func (v *Verifier) Verify(req *http.Request) error {
 header_check:
 	for _, h := range v.requiredHeaders {
 		for _, header := range params.Headers {
-			if strings.ToLower(h) == strings.ToLower(header) {
+			if strings.EqualFold(h, header) {
 				continue header_check
 			}
 		}
@@ -88,9 +96,9 @@ header_check:
 	}
 
 	// look up key based on keyId
-	key := v.keyGetter.GetKey(params.KeyId)
+	key := v.keyGetter.GetKey(params.KeyID)
 	if key == nil {
-		return fmt.Errorf("no key with id %q", params.KeyId)
+		return fmt.Errorf("no key with id %q", params.KeyID)
 	}
 
 	switch params.Algorithm {
@@ -98,28 +106,28 @@ header_check:
 		rsaPubkey := toRSAPublicKey(key)
 		if rsaPubkey == nil {
 			return fmt.Errorf("algorithm %q is not supported by key %q",
-				params.Algorithm, params.KeyId)
+				params.Algorithm, params.KeyID)
 		}
 		return RSAVerify(rsaPubkey, crypto.SHA1, sigData, params.Signature)
 	case "rsa-sha256":
 		rsaPubkey := toRSAPublicKey(key)
 		if rsaPubkey == nil {
 			return fmt.Errorf("algorithm %q is not supported by key %q",
-				params.Algorithm, params.KeyId)
+				params.Algorithm, params.KeyID)
 		}
 		return RSAVerify(rsaPubkey, crypto.SHA256, sigData, params.Signature)
 	case "hmac-sha256":
 		hmacKey := toHMACKey(key)
 		if hmacKey == nil {
 			return fmt.Errorf("algorithm %q is not supported by key %q",
-				params.Algorithm, params.KeyId)
+				params.Algorithm, params.KeyID)
 		}
 		return HMACVerify(hmacKey, crypto.SHA256, sigData, params.Signature)
 	case "ed25519":
 		ed25519Key := toEd25519PublicKey(key)
 		if ed25519Key == nil {
 			return fmt.Errorf("algorithm %q is not supported by key %q",
-				params.Algorithm, params.KeyId)
+				params.Algorithm, params.KeyID)
 		}
 		return Ed25519Verify(ed25519Key, sigData, params.Signature)
 	default:
@@ -131,8 +139,9 @@ header_check:
 // that are quoted
 var paramRE = regexp.MustCompile(`(?U)\s*([a-zA-Z][a-zA-Z0-9_]*)\s*=\s*"(.*)"\s*`)
 
+// Params holds the field requires to build the signature string
 type Params struct {
-	KeyId     string
+	KeyID     string
 	Algorithm string
 	Headers   []string
 	Signature []byte
@@ -161,11 +170,11 @@ func getParams(req *http.Request, header, prefix string) *Params {
 		}
 
 		params := Params{}
-		// malformed paramaters get ignored.
+		// malformed parameters get ignored.
 		for _, match := range matches {
 			switch match[1] {
 			case "keyId":
-				params.KeyId = match[2]
+				params.KeyID = match[2]
 			case "algorithm":
 				if algorithm, ok := parseAlgorithm(match[2]); ok {
 					params.Algorithm = algorithm

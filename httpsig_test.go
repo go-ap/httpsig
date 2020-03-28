@@ -98,22 +98,22 @@ func TestRequestTargetAndHost(t *testing.T) {
 	test.AssertNoError(verifier.Verify(req))
 
 	// swap the method and see it fail
-	orig_method := req.Method
+	origMethod := req.Method
 	req.Method = "blah"
 	test.AssertAnyError(verifier.Verify(req))
-	req.Method = orig_method
+	req.Method = origMethod
 
 	// swap the path and see it fail
-	orig_path := req.URL.Path
+	origPath := req.URL.Path
 	req.URL.Path = "blah"
 	test.AssertAnyError(verifier.Verify(req))
-	req.URL.Path = orig_path
+	req.URL.Path = origPath
 
 	// swap the host and see it fail
-	orig_host := req.Host
+	origHost := req.Host
 	req.Host = "blah"
 	test.AssertAnyError(verifier.Verify(req))
-	req.Host = orig_host
+	req.Host = origHost
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -121,12 +121,12 @@ func TestRequestTargetAndHost(t *testing.T) {
 /////////////////////////////////////////////////////////////////////////////
 
 func trimHeader(header http.Header, keepers ...string) http.Header {
-	keeper_set := map[string]bool{}
+	keeperSet := map[string]bool{}
 	for _, keeper := range keepers {
-		keeper_set[http.CanonicalHeaderKey(keeper)] = true
+		keeperSet[http.CanonicalHeaderKey(keeper)] = true
 	}
 	for key := range header {
-		if keeper_set[http.CanonicalHeaderKey(key)] {
+		if keeperSet[http.CanonicalHeaderKey(key)] {
 			continue
 		}
 		delete(header, key)
@@ -144,10 +144,12 @@ func NewTest(tb testing.TB) *Test {
 	block, _ := pem.Decode([]byte(privKey))
 	if block == nil {
 		tb.Fatalf("test setup failure: malformed PEM on private key")
+		return nil
 	}
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		tb.Fatal(err)
+		return nil
 	}
 
 	keystore := NewMemoryKeyStore()

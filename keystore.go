@@ -14,20 +14,25 @@
 
 package httpsig
 
+// MemoryKeyStore is a simple in memory key store that implement the
+// KeyGetter interface
 type MemoryKeyStore struct {
 	keys map[string]interface{}
 }
 
+// NewMemoryKeyStore creates a new MemoryKeyStore
 func NewMemoryKeyStore() *MemoryKeyStore {
 	return &MemoryKeyStore{
 		keys: make(map[string]interface{}),
 	}
 }
 
+// GetKey implements KeyGetter interface
 func (m *MemoryKeyStore) GetKey(id string) interface{} {
 	return m.keys[id]
 }
 
+// SetKey link id to a key
 func (m *MemoryKeyStore) SetKey(id string, key interface{}) {
 	m.keys[id] = key
 }

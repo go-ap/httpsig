@@ -79,7 +79,7 @@ verifier.SetRequiredHeaders([]string{"(request-target)", "host", "date"})
 ```
 
 Requests that don't include the full set of required headers in the `headers`
-signature parameter (either implicity or explicity) will fail verification.
+signature parameter (either implicitly or explicitly) will fail verification.
 
 **Note that required headers are simply a specification for which headers must
 be included in the signature, and does not enforce header presence in requests.
