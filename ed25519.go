@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// Ed25519 implements Ed25519 Algorithm
 var Ed25519 Algorithm = ed25519{}
 
 type ed25519 struct{}

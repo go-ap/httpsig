@@ -20,6 +20,8 @@ import (
 	"strings"
 )
 
+// RequireSignature is a http middleware that ensure the incoming request have
+// the required signature using verifier v
 func RequireSignature(h http.Handler, v *Verifier, realm string) (
 	out http.Handler) {
 

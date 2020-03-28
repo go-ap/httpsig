@@ -23,6 +23,7 @@ import (
 	"strings"
 )
 
+// Signer is the type used by HTTP clients to sign their request
 type Signer struct {
 	id      string
 	key     interface{}
@@ -72,6 +73,8 @@ func NewHMACSHA256Signer(id string, key []byte, headers []string) (
 	return NewSigner(id, key, HMACSHA256, headers)
 }
 
+// NewEd25519Signer contructs a signer with the specified key id, Ed25519 key,
+// and headers to sign.
 func NewEd25519Signer(id string, key crypto.PrivateKey, headers []string) *Signer {
 	return NewSigner(id, key, Ed25519, headers)
 }
@@ -102,7 +105,7 @@ func signRequest(id string, key interface{}, algo Algorithm, headers []string,
 	}
 
 	// The headers parameter can be omitted if the only header is "Date". The
-	// receiving end assumes ["date"] if no headers paramter is present.
+	// receiving end assumes ["date"] if no headers parameter is present.
 	var headersParam string
 	if !(len(headers) == 1 && headers[0] == "date") {
 		headersParam = fmt.Sprintf("headers=%q,", strings.Join(headers, " "))

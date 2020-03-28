@@ -29,15 +29,15 @@ ineffassign:
 
 cyclo:
 	@echo "Running $@"
-	@${GOPATH}/bin/golint/gocyclo -over 100 .
+	@${GOPATH}/bin/gocyclo -over 100 .
 
 deadcode:
 	@echo "Running $@"
-	@${GOPATH}/bin/golint/deadcode -test $(shell go list ./...) || true
+	@${GOPATH}/bin/deadcode -test $(shell go list ./...) || true
 
 spelling:
 	@echo "Running $@"
-	@${GOPATH}/bin/golint/misspell -i monitord -error `find .`
+	@${GOPATH}/bin/misspell -i monitord -error `find .`
 
 static:
 	@echo "Running $@"
