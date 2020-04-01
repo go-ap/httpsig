@@ -41,7 +41,7 @@ func RequireSignature(h http.Handler, v *Verifier, realm string) (
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		err := v.Verify(req)
+		_, err := v.Verify(req)
 		if err != nil {
 			w.Header()["WWW-Authenticate"] = []string{challenge}
 			w.WriteHeader(http.StatusUnauthorized)

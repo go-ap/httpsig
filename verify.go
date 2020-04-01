@@ -58,21 +58,22 @@ func (v *Verifier) SetRequiredHeaders(headers []string) {
 }
 
 // Verify parses req  and verify the signature using the key returned by
-// the keyGetter. It returns a nil error is the signature verifies, an error otherwise
-func (v *Verifier) Verify(req *http.Request) error {
+// the keyGetter. It returns the KeyId parameter from he signature header
+// and a nil error if the signature verifies, an error otherwise
+func (v *Verifier) Verify(req *http.Request) (string, error) {
 	// retrieve and validate params from the request
 	params := getParamsFromAuthHeader(req)
 	if params == nil {
-		return fmt.Errorf("no params present")
+		return "", fmt.Errorf("no params present")
 	}
 	if params.KeyID == "" {
-		return fmt.Errorf("keyId is required")
+		return "", fmt.Errorf("keyId is required")
 	}
 	if params.Algorithm == "" {
-		return fmt.Errorf("algorithm is required")
+		return "", fmt.Errorf("algorithm is required")
 	}
 	if len(params.Signature) == 0 {
-		return fmt.Errorf("signature is required")
+		return "", fmt.Errorf("signature is required")
 	}
 	if len(params.Headers) == 0 {
 		params.Headers = []string{"date"}
@@ -85,53 +86,53 @@ header_check:
 				continue header_check
 			}
 		}
-		return fmt.Errorf("missing required header in signature %q",
+		return "", fmt.Errorf("missing required header in signature %q",
 			h)
 	}
 
 	// calculate signature string for request
 	sigData, err := BuildSignatureData(req, params.Headers)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// look up key based on keyId
 	key := v.keyGetter.GetKey(params.KeyID)
 	if key == nil {
-		return fmt.Errorf("no key with id %q", params.KeyID)
+		return "", fmt.Errorf("no key with id %q", params.KeyID)
 	}
 
 	switch params.Algorithm {
 	case "rsa-sha1":
 		rsaPubkey := toRSAPublicKey(key)
 		if rsaPubkey == nil {
-			return fmt.Errorf("algorithm %q is not supported by key %q",
+			return "", fmt.Errorf("algorithm %q is not supported by key %q",
 				params.Algorithm, params.KeyID)
 		}
-		return RSAVerify(rsaPubkey, crypto.SHA1, sigData, params.Signature)
+		return params.KeyID, RSAVerify(rsaPubkey, crypto.SHA1, sigData, params.Signature)
 	case "rsa-sha256":
 		rsaPubkey := toRSAPublicKey(key)
 		if rsaPubkey == nil {
-			return fmt.Errorf("algorithm %q is not supported by key %q",
+			return "", fmt.Errorf("algorithm %q is not supported by key %q",
 				params.Algorithm, params.KeyID)
 		}
-		return RSAVerify(rsaPubkey, crypto.SHA256, sigData, params.Signature)
+		return params.KeyID, RSAVerify(rsaPubkey, crypto.SHA256, sigData, params.Signature)
 	case "hmac-sha256":
 		hmacKey := toHMACKey(key)
 		if hmacKey == nil {
-			return fmt.Errorf("algorithm %q is not supported by key %q",
+			return "", fmt.Errorf("algorithm %q is not supported by key %q",
 				params.Algorithm, params.KeyID)
 		}
-		return HMACVerify(hmacKey, crypto.SHA256, sigData, params.Signature)
+		return params.KeyID, HMACVerify(hmacKey, crypto.SHA256, sigData, params.Signature)
 	case "ed25519":
 		ed25519Key := toEd25519PublicKey(key)
 		if ed25519Key == nil {
-			return fmt.Errorf("algorithm %q is not supported by key %q",
+			return "", fmt.Errorf("algorithm %q is not supported by key %q",
 				params.Algorithm, params.KeyID)
 		}
-		return Ed25519Verify(ed25519Key, sigData, params.Signature)
+		return params.KeyID, Ed25519Verify(ed25519Key, sigData, params.Signature)
 	default:
-		return fmt.Errorf("unsupported algorithm %q", params.Algorithm)
+		return "", fmt.Errorf("unsupported algorithm %q", params.Algorithm)
 	}
 }
 
