@@ -15,7 +15,6 @@
 package httpsig
 
 import (
-	"crypto"
 	ed "crypto/ed25519"
 	"crypto/rand"
 	"crypto/rsa"
@@ -116,10 +115,8 @@ func toHMACKey(key interface{}) []byte {
 	}
 }
 
-func toEd25519PrivateKey(key interface{}) crypto.PrivateKey {
+func toEd25519PrivateKey(key interface{}) ed.PrivateKey {
 	switch k := key.(type) {
-	case []byte:
-		return k
 	case ed.PrivateKey:
 		return k
 	default:
@@ -129,8 +126,6 @@ func toEd25519PrivateKey(key interface{}) crypto.PrivateKey {
 
 func toEd25519PublicKey(key interface{}) ed.PublicKey {
 	switch k := key.(type) {
-	case []byte:
-		return k
 	case ed.PublicKey:
 		return k
 	case ed.PrivateKey:
