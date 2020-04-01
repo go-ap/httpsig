@@ -21,7 +21,7 @@ import (
 	"strings"
 )
 
-// ctxKeyIDType is the type used to retreive the KeyId parametes extracted from the HTTP headers
+// ctxKeyIDType is the type used to retrieve the KeyId parametes extracted from the HTTP headers
 // and set into the request.Context during call of verifier.Verify
 type ctxKeyIDType struct{}
 
