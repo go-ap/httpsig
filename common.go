@@ -43,7 +43,7 @@ func requestPath(req *http.Request) string {
 }
 
 // BuildSignatureString constructs a signature string following section 2.3
-func BuildSignatureString(req *http.Request, headers []string) (string, error) {
+func BuildSignatureString(req *http.Request, headers []string, created, expires time.Time) (string, error) {
 	if len(headers) == 0 {
 		headers = []string{"(created)"}
 	}
@@ -56,15 +56,9 @@ func BuildSignatureString(req *http.Request, headers []string) (string, error) {
 			values = append(values, fmt.Sprintf("%s: %s %s",
 				h, strings.ToLower(req.Method), requestPath(req)))
 		case "(created)":
-			if req.Header.Get(h) == "" {
-				req.Header.Set(h, fmt.Sprintf("%d", time.Now().Unix()))
-			}
-			values = append(values, fmt.Sprintf("%s: %s", h, req.Header.Get(h)))
+			values = append(values, fmt.Sprintf("%s: %d", h, created.Unix()))
 		case "(expires)":
-			if req.Header.Get(h) == "" {
-				req.Header.Set(h, fmt.Sprintf("%d", time.Now().Unix()))
-			}
-			values = append(values, fmt.Sprintf("%s: %s", h, req.Header.Get(h)))
+			values = append(values, fmt.Sprintf("%s: %d", h, expires.Unix()))
 		case "host":
 			values = append(values, fmt.Sprintf("%s: %s", h, req.Host))
 		case "date":
@@ -87,8 +81,8 @@ func BuildSignatureString(req *http.Request, headers []string) (string, error) {
 
 // BuildSignatureData is a convenience wrapper around BuildSignatureString that
 // returns []byte instead of a string.
-func BuildSignatureData(req *http.Request, headers []string) ([]byte, error) {
-	s, err := BuildSignatureString(req, headers)
+func BuildSignatureData(req *http.Request, headers []string, created, expires time.Time) ([]byte, error) {
+	s, err := BuildSignatureString(req, headers, created, expires)
 	return []byte(s), err
 }
 

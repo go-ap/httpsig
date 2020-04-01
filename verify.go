@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // Verifier is used by by the HTTP server to verify the incoming HTTP requests
@@ -91,7 +93,7 @@ header_check:
 	}
 
 	// calculate signature string for request
-	sigData, err := BuildSignatureData(req, params.Headers)
+	sigData, err := BuildSignatureData(req, params.Headers, params.Created, params.Expires)
 	if err != nil {
 		return "", err
 	}
@@ -146,6 +148,8 @@ type Params struct {
 	Algorithm string
 	Headers   []string
 	Signature []byte
+	Created   time.Time
+	Expires   time.Time
 }
 
 func getParamsFromAuthHeader(req *http.Request) *Params {
@@ -188,6 +192,14 @@ func getParams(req *http.Request, header, prefix string) *Params {
 				if signature, ok := parseSignature(match[2]); ok {
 					params.Signature = signature
 				}
+			case "created":
+				if created, ok := parseTime(match[2]); ok {
+					params.Created = created
+				}
+			case "expires":
+				if expires, ok := parseTime(match[2]); ok {
+					params.Expires = expires
+				}
 			}
 		}
 		return &params
@@ -222,4 +234,12 @@ func parseSignature(s string) (signature []byte, ok bool) {
 		return nil, false
 	}
 	return signature, true
+}
+
+func parseTime(s string) (t time.Time, ok bool) {
+	sec, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return t, false
+	}
+	return time.Unix(sec, 0), true
 }

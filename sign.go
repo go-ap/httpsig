@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // Signer is the type used by HTTP clients to sign their request
@@ -81,7 +82,8 @@ func NewEd25519Signer(id string, key crypto.PrivateKey, headers []string) *Signe
 
 // Sign signs an http request and adds the signature to the authorization header
 func (r *Signer) Sign(req *http.Request) error {
-	params, err := signRequest(r.id, r.key, r.algo, r.headers, req)
+	now := time.Now()
+	params, err := signRequest(r.id, r.key, r.algo, r.headers, now, now.Add(time.Minute), req)
 	if err != nil {
 		return err
 	}
@@ -91,10 +93,8 @@ func (r *Signer) Sign(req *http.Request) error {
 }
 
 // signRequest signs an http request and returns the parameter string.
-func signRequest(id string, key interface{}, algo Algorithm, headers []string,
-	req *http.Request) (params string, err error) {
-
-	signatureData, err := BuildSignatureData(req, headers)
+func signRequest(id string, key interface{}, algo Algorithm, headers []string, created, expires time.Time, req *http.Request) (params string, err error) {
+	signatureData, err := BuildSignatureData(req, headers, created, expires)
 	if err != nil {
 		return "", err
 	}
@@ -112,9 +112,11 @@ func signRequest(id string, key interface{}, algo Algorithm, headers []string,
 	}
 
 	return fmt.Sprintf(
-		"keyId=%q,algorithm=%q,%ssignature=%q",
+		"keyId=%q,algorithm=%q,created=\"%d\",expires=\"%q\",%ssignature=%q",
 		id,
 		algo.Name(),
+		created.Unix(),
+		expires.Unix(),
 		headersParam,
 		base64.StdEncoding.EncodeToString(signature)), nil
 }
