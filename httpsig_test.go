@@ -69,11 +69,14 @@ func TestDate(t *testing.T) {
 	req.Host = "BAR"
 	req.URL.Path = "BAZ"
 	req.Header = trimHeader(req.Header, "Authorization", "Date")
-	test.AssertNoError(verifier.Verify(req))
+	keyID, err := verifier.Verify(req)
+	test.AssertNoError(err)
+	test.AssertStringEqual("Test", keyID)
 
 	// Now modify the date and assert verification fails
 	req.Header.Set("Date", "stuff")
-	test.AssertAnyError(verifier.Verify(req))
+	_, err = verifier.Verify(req)
+	test.AssertAnyError(err)
 }
 
 func TestRequestTargetAndHost(t *testing.T) {
@@ -95,24 +98,29 @@ func TestRequestTargetAndHost(t *testing.T) {
 	req.Header = trimHeader(req.Header, "Authorization", "Date")
 
 	// Make sure it verifies.
-	test.AssertNoError(verifier.Verify(req))
+	keyID, err := verifier.Verify(req)
+	test.AssertNoError(err)
+	test.AssertStringEqual("Test", keyID)
 
 	// swap the method and see it fail
 	origMethod := req.Method
 	req.Method = "blah"
-	test.AssertAnyError(verifier.Verify(req))
+	_, err = verifier.Verify(req)
+	test.AssertAnyError(err)
 	req.Method = origMethod
 
 	// swap the path and see it fail
 	origPath := req.URL.Path
 	req.URL.Path = "blah"
-	test.AssertAnyError(verifier.Verify(req))
+	_, err = verifier.Verify(req)
+	test.AssertAnyError(err)
 	req.URL.Path = origPath
 
 	// swap the host and see it fail
 	origHost := req.Host
 	req.Host = "blah"
-	test.AssertAnyError(verifier.Verify(req))
+	_, err = verifier.Verify(req)
+	test.AssertAnyError(err)
 	req.Host = origHost
 }
 

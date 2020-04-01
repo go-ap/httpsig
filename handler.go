@@ -15,10 +15,33 @@
 package httpsig
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 )
+
+// ctxKeyIDType is the type used to retreive the KeyId parametes extracted from the HTTP headers
+// and set into the request.Context during call of verifier.Verify
+type ctxKeyIDType struct{}
+
+var ctxKeyIDKey = &ctxKeyIDType{}
+
+// WithKeyID retrieves the KeyId parameter from the requests
+func WithKeyID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, ctxKeyIDKey, id)
+}
+
+// KeyIDFromContext returns the request ID from the context.
+// A zero ID is returned if there are no identifers in the
+// current context.
+func KeyIDFromContext(ctx context.Context) string {
+	v := ctx.Value(ctxKeyIDKey)
+	if v == nil {
+		return ""
+	}
+	return v.(string)
+}
 
 // RequireSignature is a http middleware that ensure the incoming request have
 // the required signature using verifier v
@@ -41,13 +64,13 @@ func RequireSignature(h http.Handler, v *Verifier, realm string) (
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		_, err := v.Verify(req)
+		keyID, err := v.Verify(req)
 		if err != nil {
 			w.Header()["WWW-Authenticate"] = []string{challenge}
 			w.WriteHeader(http.StatusUnauthorized)
 			fmt.Fprintln(w, err.Error())
 			return
 		}
-		h.ServeHTTP(w, req)
+		h.ServeHTTP(w, req.WithContext(WithKeyID(req.Context(), keyID)))
 	})
 }
