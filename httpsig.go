@@ -31,14 +31,14 @@ type Algorithm interface {
 //
 // Other types will treated as if no key was returned.
 type KeyGetter interface {
-	GetKey(id string) interface{}
+	GetKey(id string) (interface{}, error)
 }
 
 // KeyGetterFunc is a convenience type for implementing a KeyGetter with a
 // regular function
-type KeyGetterFunc func(id string) interface{}
+type KeyGetterFunc func(id string) (interface{}, error)
 
 // GetKey calls fn(id)
-func (fn KeyGetterFunc) GetKey(id string) interface{} {
+func (fn KeyGetterFunc) GetKey(id string) (interface{}, error) {
 	return fn(id)
 }

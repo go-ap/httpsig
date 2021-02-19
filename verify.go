@@ -99,7 +99,11 @@ header_check:
 	}
 
 	// look up key based on keyId
-	key := v.keyGetter.GetKey(params.KeyID)
+	key, err := v.keyGetter.GetKey(params.KeyID)
+	if err != nil {
+		return "", err
+	}
+	// we still leave this sanity check
 	if key == nil {
 		return "", fmt.Errorf("no key with id %q", params.KeyID)
 	}

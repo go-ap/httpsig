@@ -14,6 +14,8 @@
 
 package httpsig
 
+import "fmt"
+
 // MemoryKeyStore is a simple in memory key store that implement the
 // KeyGetter interface
 type MemoryKeyStore struct {
@@ -28,8 +30,12 @@ func NewMemoryKeyStore() *MemoryKeyStore {
 }
 
 // GetKey implements KeyGetter interface
-func (m *MemoryKeyStore) GetKey(id string) interface{} {
-	return m.keys[id]
+func (m *MemoryKeyStore) GetKey(id string) (interface{}, error) {
+	pk, ok := m.keys[id]
+	if !ok {
+		return nil, fmt.Errorf("key not found")
+	}
+	return pk, nil
 }
 
 // SetKey link id to a key
