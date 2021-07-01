@@ -1,4 +1,4 @@
-# HTTPSIG for Go ![Build](https://github.com/zaibon/httpsig/workflows/Build/badge.svg)
+# HTTPSIG for Go
 
 This library implements HTTP request signature generation and verification based on
 the RFC draft specification https://tools.ietf.org/html/draft-cavage-http-signatures-12.

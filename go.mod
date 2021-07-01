@@ -1,4 +1,4 @@
-module github.com/zaibon/httpsig
+module github.com/go-ap/httpsig
 
 go 1.14
 
