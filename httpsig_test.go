@@ -23,6 +23,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"reflect"
 	"runtime/debug"
@@ -229,4 +230,44 @@ func (t *Test) AssertAnyError(err error) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
+}
+
+func Test_FedboxBrokenRequests(t *testing.T) {
+	key, _ := rsa.GenerateKey(rand.New(rand.NewSource(6667)), 512)
+
+	keystore := NewMemoryKeyStore()
+	keystore.SetKey("Test", key)
+
+	test := &Test{
+		tb:         t,
+		KeyGetter:  keystore,
+		PrivateKey: key,
+	}
+
+	signer := NewRSASHA256Signer("Test", test.PrivateKey, []string{"date"})
+	verifier := NewVerifier(test)
+
+	req := test.NewRequest()
+	test.AssertNoError(signer.Sign(req))
+
+	// headers should not be present in the signature params since we specified
+	// nil in the constructor. ["Date"] is default header list.
+	params := getParamsFromAuthHeader(req)
+	test.AssertNotNil(params)
+	test.AssertStringsEqual(params.Headers, []string{})
+
+	// Modify the request host, method, and path, and drop all headers but the date
+	// and authorization header and assert it still verifies.
+	req.Method = "FOO"
+	req.Host = "BAR"
+	req.URL.Path = "BAZ"
+	req.Header = trimHeader(req.Header, "Authorization", "Date")
+	keyID, err := verifier.Verify(req)
+	test.AssertNoError(err)
+	test.AssertStringEqual("Test", keyID)
+
+	// Now modify the date and assert verification fails
+	req.Header.Set("Date", "stuff")
+	_, err = verifier.Verify(req)
+	test.AssertAnyError(err)
 }
