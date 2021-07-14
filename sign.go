@@ -112,7 +112,7 @@ func signRequest(id string, key interface{}, algo Algorithm, headers []string, c
 	}
 
 	return fmt.Sprintf(
-		"keyId=%q,algorithm=%q,created=\"%d\",expires=\"%q\",%ssignature=%q",
+		"keyId=%q,algorithm=%q,created=\"%d\",expires=\"%d\",%ssignature=%q",
 		id,
 		algo.Name(),
 		created.Unix(),
