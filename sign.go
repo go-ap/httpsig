@@ -32,7 +32,7 @@ type Signer struct {
 	headers []string
 }
 
-// NewSigner contructs a signer with the specified key id, key, algorithm,
+// NewSigner constructs a signer with the specified key id, key, algorithm,
 // and headers to sign. By default, if headers is nil or empty, the
 // request-target and date headers will be signed.
 func NewSigner(id string, key interface{}, algo Algorithm, headers []string) (
@@ -88,11 +88,11 @@ func (r *Signer) Sign(req *http.Request) error {
 		return err
 	}
 
-	req.Header.Set("Authorization", "Signature "+params)
+	req.Header.Set("Signature", params)
 	return nil
 }
 
-// signRequest signs an http request and returns the parameter string.
+// signRequest signs an HTTP request and returns the parameter string.
 func signRequest(id string, key interface{}, algo Algorithm, headers []string, created, expires time.Time, req *http.Request) (params string, err error) {
 	signatureData, err := BuildSignatureData(req, headers, created, expires)
 	if err != nil {

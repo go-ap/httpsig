@@ -157,7 +157,7 @@ type Params struct {
 }
 
 func getParamsFromAuthHeader(req *http.Request) *Params {
-	return getParams(req, "Authorization", "Signature ")
+	return getParams(req, "Signature", "")
 }
 
 func getParams(req *http.Request, header, prefix string) *Params {
